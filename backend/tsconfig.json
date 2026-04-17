@@ -9,9 +9,9 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-    // "types": [
-    //   "bun-types"
-    // ],
+    "types": [
+      "bun-types"
+    ],
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
