@@ -1,0 +1,134 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: docker.io
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/gitops-k8s-frontend
+  BACKEND_IMAGE: $ {{ secrets.DOCKERHUB_TOKEN }}/gitops-k8s-backend
+
+jobs:
+  test-and-quality:
+    name: Test & SonarQube Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install and Test Frontend
+        working-directory: ./frontend
+        run: |
+          bun install --frozen-lockfile
+          bun test
+
+      - name: Install and Test Backend
+        working-directory: ./backend
+        run: |
+          bun install --frozen-lockfile
+          bun test
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  build-and-scan:
+    name: Build Docker Images & Trivy Scan
+    runs-on: ubuntu-latest
+    needs: test-and-quality
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: ${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short}}
+          load: true
+
+      - name: Trivy Scan - Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short}}
+          format: "sarif"
+          output: "trivy-frontend.sarif"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+
+      - name: Upload Trivy Frontend Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-frontend.sarif"
+        if: always()
+
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: ${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short}}
+          load: true
+
+      - name: Trivy Scan - Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short}}
+          format: "sarif"
+          output: "trivy-backend.sarif"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+
+      - name: Upload Trivy Backend Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-backend.sarif"
+        if: always()
+
+      - name: Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+
+      - name: Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short }}
+            ${{ env.BACKEND_IMAGE }}:latest
