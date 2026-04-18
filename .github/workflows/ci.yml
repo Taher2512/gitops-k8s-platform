@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: docker.io
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/gitops-k8s-frontend
-  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_TOKEN }}/gitops-k8s-backend
+  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/gitops-k8s-backend
 
 jobs:
   test-and-quality:
@@ -80,20 +80,27 @@ jobs:
           tags: ${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short}}
           load: true
 
-      - name: Trivy Scan - Frontend
+      - name: Trivy Scan - Frontend (SARIF Report)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short}}
           format: "sarif"
           output: "trivy-frontend.sarif"
-          severity: "CRITICAL"
-          # exit-code: "1"
+          exit-code: "0"
 
       - name: Upload Trivy Frontend Results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-frontend.sarif"
         if: always()
+
+      - name: Trivy Scan - Frontend (Quality Gate)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short}}
+          format: "table"
+          severity: "CRITICAL"
+          exit-code: "1"
 
       - name: Build Backend Image
         uses: docker/build-push-action@v5
@@ -103,20 +110,27 @@ jobs:
           tags: ${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short}}
           load: true
 
-      - name: Trivy Scan - Backend
+      - name: Trivy Scan - Backend (SARIF Report)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short}}
           format: "sarif"
           output: "trivy-backend.sarif"
-          severity: "CRITICAL"
-          # exit-code: "1"
+          exit-code: "0"
 
       - name: Upload Trivy Backend Results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-backend.sarif"
         if: always()
+
+      - name: Trivy Scan - Backend (Quality Gate)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short}}
+          format: "sarif"
+          severity: "CRITICAL"
+          exit-code: "1"
 
       - name: Push Frontend Image
         uses: docker/build-push-action@v5
