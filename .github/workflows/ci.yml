@@ -33,13 +33,13 @@ jobs:
         working-directory: ./frontend
         run: |
           bun install --frozen-lockfile
-          bun test
+          bun test --coverage
 
       - name: Install and Test Backend
         working-directory: ./backend
         run: |
           bun install --frozen-lockfile
-          bun test
+          bun test --coverage
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@master
