@@ -21,6 +21,6 @@ app.get("/api/fail", (req, res) => {
   res.status(500).send("Internal Server Error");
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Backend server is running on port ${PORT}`);
 });
