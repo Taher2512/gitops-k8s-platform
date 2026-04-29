@@ -25,9 +25,9 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "300m"
-            readinessProbe:
-              httpGet:
-                path: /
-                port: 3000
-              initialDelaySeconds: 10
-              periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
