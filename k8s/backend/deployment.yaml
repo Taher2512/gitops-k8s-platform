@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: taher2512/gitops-k8s-backend:597dd03
+          image: taher2512/gitops-k8s-backend:a040f38
           ports:
             - containerPort: 3001
           resources:
