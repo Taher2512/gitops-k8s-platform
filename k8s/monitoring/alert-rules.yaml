@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: backend-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: backend.rules
+      rules:
+        - alert: HighErrorRate
+          expr: rate(http_requests_total{status_code="500"}[5m]) > 0.1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Backend is returning too many 500 errors"
+            description: "Error rate is {{ $value }} requests/sec over the last 5 minutes."
