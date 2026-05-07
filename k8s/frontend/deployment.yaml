@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: taher2512/gitops-k8s-frontend:5c40629
+          image: taher2512/gitops-k8s-frontend:a4e1508
           ports:
             - containerPort: 3000
           resources:
