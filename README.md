@@ -333,17 +333,11 @@ git push
 
 ### ArgoCD — GitOps Sync Dashboard
 
-<!-- Attach a screenshot of your ArgoCD UI showing the application graph with synced pods -->
-<!-- Recommended filename: screenshots/argocd-dashboard.png -->
-
-![ArgoCD Dashboard](./screenshots/argocd-dashboard.png)
+![ArgoCD Dashboard](./assets/argocd-dashboard.png)
 
 ### Grafana — Kubernetes Monitoring Dashboard
 
-<!-- Attach a screenshot of your Grafana dashboard showing pod metrics and the error rate panel -->
-<!-- Recommended filename: screenshots/grafana-dashboard.png -->
-
-![Grafana Dashboard](./screenshots/grafana-dashboard.png)
+![Grafana Dashboard](./assets/grafana-dashboard-1.png)
 
 ---
 
